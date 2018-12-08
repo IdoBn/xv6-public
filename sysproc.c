@@ -7,6 +7,9 @@
 #include "mmu.h"
 #include "proc.h"
 
+#include "syscall.h"
+#include "traps.h"
+
 int
 sys_fork(void)
 {
@@ -30,7 +33,7 @@ int
 sys_kill(void)
 {
   int pid;
-
+#
   if(argint(0, &pid) < 0)
     return -1;
   return kill(pid);
@@ -88,4 +91,28 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int ran = 0;
+
+int
+sys_test(void)
+{
+  ran += 1;
+  cprintf("sys_test called\n");
+  if (ran % 2 == 0) {
+    cprintf("running syscall inside syscall\n");
+    // add inline asm for syscall here:
+    asm (
+      "movl $22, %%eax;"
+      "int $64;"
+      : /* output none */
+      : /* input */
+      : /* clobbered */
+      "%eax"
+    );
+  } else {
+    cprintf("not running syscall inside syscall\n");
+  }
+  return 0;
 }
